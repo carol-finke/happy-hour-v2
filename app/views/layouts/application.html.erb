@@ -14,10 +14,13 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="/stylesheets/application.css">
+  <%= stylesheet_link_tag 'application', media: 'all', 'data-turbolinks-track': 'reload' %>
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
 </head>
 
 <body>
@@ -38,28 +41,27 @@
         </ul>
         
         <ul class="navbar-nav mb-2 mb-lg-0">
-          <% @user = User.find_by({ "id" => session["user_id"] }) %>
-          <% if @user == nil %>
+          <% @user = User.find_by(id: session[:user_id]) %>
+          <% if @user.nil? %>
             <li class="nav-item"><a href="/users/new" class="nav-link">Sign Up</a></li>
             <li class="nav-item"><a href="/login" class="nav-link">Login</a></li>
           <% else %>
-            <li class="nav-text">Logged in as: <%= @user["first_name"] %></li>
+            <li class="nav-text">Logged in as: <%= @user.first_name %></li>
             <li class="nav-item"><a href="/logout" class="nav-link">Logout</a></li>
           <% end %>
 
           <li class="nav-item">
-            <a href="/posts/new/" class="btn btn-success">New Post</a>
+            <a href="/posts/new" class="btn btn-success">New Post</a>
           </li>
-        </div>
-  
+        </ul>
       </div>
     </div>
   </nav>
 
   <div class="container mt-3">
-    <% if flash["notice"] != nil %>
+    <% if flash[:notice] %>
       <div class="alert alert-primary">
-        <%= flash["notice"] %>
+        <%= flash[:notice] %>
       </div>
     <% end %>
 
