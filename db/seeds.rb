@@ -1,118 +1,52 @@
-require 'roo'
+require 'rubyXL'
 
-file_path = Rails.root.join('db', 'seeds_data', 'happy_hours_data.xlsx')
-xlsx = Roo::Spreadsheet.open(file_path.to_s)
+# Load the workbook
+workbook = RubyXL::Parser.parse(Rails.root.join('db', 'seeds_data', 'happy_hours_data.xlsx'))
 
-happy_hour_mapping = {}
+puts "Sheet names in workbook: #{workbook.worksheets.map(&:sheet_name).inspect}"
 
-# Happy Hours
-puts "Seeding Happy Hours..."
-happy_hours_sheet = xlsx.sheet('happy_hours')
-happy_hours_sheet.each_row_streaming(offset: 1) do |row|
-  happy_hour = HappyHour.create!(
-    name: row[0].value,
-    location: row[1].value,
-    description: row[2].value
-  )
-  happy_hour_mapping[row[0].value] = happy_hour.id  # Assuming name is unique
-rescue ActiveRecord::RecordInvalid => e
-  puts "Failed to create HappyHour: #{e.message}"
+# Find the specific sheets
+happy_hours_sheet = workbook.worksheets.find { |sheet| sheet.sheet_name == 'happy_hours' }
+happy_hours_timing_sheet = workbook.worksheets.find { |sheet| sheet.sheet_name == 'happy_hour_timings' }
+
+def safe_value(cell)
+  cell&.value || ''
 end
 
-# Happy Hour Timings
-puts "Seeding Happy Hour Timings..."
-happy_hour_timings_sheet = xlsx.sheet('happy_hour_timings')
-happy_hour_timings_sheet.each_row_streaming(offset: 1) do |row|
-  happy_hour_id = happy_hour_mapping[row[0].value]  # Assuming first column is the Happy Hour name
-  if happy_hour_id
-    HappyHourTiming.create!(
-      happy_hour_id: happy_hour_id,
-      day_of_week: row[1].value,
-      start_time: row[2].value,
-      end_time: row[3].value
+if happy_hours_sheet.nil?
+  puts "Sheet 'happy_hours' not found!"
+else
+  puts "Seeding HappyHours..."
+  # Seed HappyHours
+  happy_hours_sheet.each_with_index do |row, index|
+    next if index == 0 # Skip header row
+    happy_hour = HappyHour.create(
+      name: safe_value(row[1]),
+      location: safe_value(row[2]),       # Changed from address to location
+      description: safe_value(row[5])     # Changed from deal to description
     )
-  else
-    puts "Invalid HappyHour name for HappyHourTiming: #{row[0].value}"
+    puts "Created HappyHour: #{happy_hour.name}"
   end
-rescue ActiveRecord::RecordInvalid => e
-  puts "Failed to create HappyHourTiming: #{e.message}"
 end
 
-# Features
-puts "Seeding Features..."
-features_sheet = xlsx.sheet('features')
-features_sheet.each_row_streaming(offset: 1) do |row|
-  Feature.create!(
-    feature_name: row[0].value
-  )
-rescue ActiveRecord::RecordInvalid => e
-  puts "Failed to create Feature: #{e.message}"
-end
-
-# Happy Hour Features
-puts "Seeding Happy Hour Features..."
-happy_hour_features_sheet = xlsx.sheet('happy_hour_features')
-happy_hour_features_sheet.each_row_streaming(offset: 1) do |row|
-  happy_hour_id = happy_hour_mapping[row[0].value]  # Assuming first column is the Happy Hour name
-  if happy_hour_id
-    HappyHourFeature.create!(
-      happy_hour_id: happy_hour_id,
-      feature_id: row[1].value
-    )
-  else
-    puts "Invalid HappyHour name for HappyHourFeature: #{row[0].value}"
+if happy_hours_timing_sheet.nil?
+  puts "Sheet 'happy_hour_timings' not found!"
+else
+  puts "Seeding HappyHourTimings..."
+  # Seed HappyHourTimings
+  happy_hours_timing_sheet.each_with_index do |row, index|
+    next if index == 0 # Skip header row
+    happy_hour = HappyHour.find_by(name: safe_value(row[3]))
+    if happy_hour
+      HappyHourTiming.create(
+        day_of_week: safe_value(row[0]),
+        start_time: safe_value(row[1]),
+        end_time: safe_value(row[2]),
+        happy_hour_id: happy_hour.id
+      )
+      puts "Created HappyHourTiming for: #{happy_hour.name} on #{safe_value(row[0])}"
+    else
+      puts "HappyHour not found for: #{safe_value(row[3])}"
+    end
   end
-rescue ActiveRecord::RecordInvalid => e
-  puts "Failed to create HappyHourFeature: #{e.message}"
 end
-
-# Rooftops
-puts "Seeding Rooftops..."
-rooftops_sheet = xlsx.sheet('rooftops')
-rooftops_sheet.each_row_streaming(offset: 1) do |row|
-  happy_hour_id = happy_hour_mapping[row[0].value]  # Assuming first column is the Happy Hour name
-  if happy_hour_id
-    Rooftop.create!(
-      happy_hour_id: happy_hour_id
-    )
-  else
-    puts "Invalid HappyHour name for Rooftop: #{row[0].value}"
-  end
-rescue ActiveRecord::RecordInvalid => e
-  puts "Failed to create Rooftop: #{e.message}"
-end
-
-# Patios
-puts "Seeding Patios..."
-patios_sheet = xlsx.sheet('patios')
-patios_sheet.each_row_streaming(offset: 1) do |row|
-  happy_hour_id = happy_hour_mapping[row[0].value]  # Assuming first column is the Happy Hour name
-  if happy_hour_id
-    Patio.create!(
-      happy_hour_id: happy_hour_id
-    )
-  else
-    puts "Invalid HappyHour name for Patio: #{row[0].value}"
-  end
-rescue ActiveRecord::RecordInvalid => e
-  puts "Failed to create Patio: #{e.message}"
-end
-
-# Activities
-puts "Seeding Activities..."
-activities_sheet = xlsx.sheet('activities')
-activities_sheet.each_row_streaming(offset: 1) do |row|
-  happy_hour_id = happy_hour_mapping[row[0].value]  # Assuming first column is the Happy Hour name
-  if happy_hour_id
-    Activity.create!(
-      happy_hour_id: happy_hour_id,
-      activity_name: row[1].value
-    )
-  else
-    puts "Invalid HappyHour name for Activity: #{row[0].value}"
-  end
-rescue ActiveRecord::RecordInvalid => e
-  puts "Failed to create Activity: #{e.message}"
-end
-
-puts "Seeding completed."

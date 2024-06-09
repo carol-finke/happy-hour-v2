@@ -1,0 +1,14 @@
+<h1>Happy Hours</h1>
+<div class="row">
+  <% @happy_hours.each do |happy_hour| %>
+    <div class="col-md-4">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title"><%= link_to happy_hour.name, happy_hour_path(happy_hour) %></h5>
+          <p class="card-text"><%= happy_hour.location %></p>
+          <p class="card-text"><%= happy_hour.description %></p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

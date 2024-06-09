@@ -1,0 +1,10 @@
+<h1><%= @happy_hour.name %></h1>
+<p><%= @happy_hour.location %></p>
+<p><%= @happy_hour.description %></p>
+<h2>Timings</h2>
+<ul>
+  <% @timings.each do |timing| %>
+    <li><%= timing.day_of_week %> from <%= timing.start_time.strftime("%I:%M %p") %> to <%= timing.end_time.strftime("%I:%M %p") %></li>
+  <% end %>
+</ul>
+<%= link_to 'Back', happy_hours_path, class: "btn btn-primary" %>

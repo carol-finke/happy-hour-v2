@@ -186,6 +186,9 @@ GEM
     roo (2.10.1)
       nokogiri (~> 1)
       rubyzip (>= 1.3.0, < 3.0.0)
+    rubyXL (3.4.27)
+      nokogiri (>= 1.10.8)
+      rubyzip (>= 1.3.0)
     rubyzip (2.3.2)
     sassc (2.4.0)
       ffi (~> 1.9)
@@ -244,6 +247,7 @@ DEPENDENCIES
   puma (>= 5.0)
   rails (~> 7.1.3)
   roo
+  rubyXL
   sqlite3 (~> 1.4)
   tabulo
   tzinfo-data
